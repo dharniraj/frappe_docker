@@ -58,6 +58,12 @@ docker build \
  --tag=custom:15 \
  --file=images/layered/Containerfile .
 ```
+docker build \
+ --build-arg=FRAPPE_PATH=https://github.com/dharniraj/frappe \
+ --build-arg=FRAPPE_BRANCH=version-15-formigo \
+ --build-arg=APPS_JSON_BASE64=$APPS_JSON_BASE64 \
+ --tag=dharniraj/frappe-custom:1.0.0 \
+ --file=images/custom/Containerfile .
 
 `Podman`:
 
