@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   backend:
     image: dharniraj/frappe-custom:1.0.0
