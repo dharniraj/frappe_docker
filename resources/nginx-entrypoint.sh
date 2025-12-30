@@ -49,7 +49,4 @@ envsubst '${BACKEND}
 	${CLIENT_MAX_BODY_SIZE}' \
   </templates/nginx/frappe.conf.template >/etc/nginx/conf.d/frappe.conf
 
-cp /home/frappe/frappe-bench/sites/formigo_in_crt.pem /etc/nginx/conf.d/formigo_in_crt.pem
-cp /home/frappe/frappe-bench/sites/formigo_in_key.pem /etc/nginx/conf.d/formigo_in_key.pem
-
 nginx -g 'daemon off;'
