@@ -5,7 +5,7 @@ services:
       - frappe_network
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
@@ -88,7 +88,7 @@ services:
       retries: 20
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -108,7 +108,7 @@ services:
       - websocket
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
     command:
       - nginx-entrypoint.sh
     environment:
@@ -133,7 +133,7 @@ services:
       - frappe_network
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
     command:
       - bench
       - worker
@@ -152,7 +152,7 @@ services:
       - frappe_network
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
     command:
       - bench
       - worker
@@ -171,7 +171,7 @@ services:
       - frappe_network
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
     volumes:
       - redis-queue-data:/data
 
@@ -181,7 +181,7 @@ services:
       - frappe_network
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
 
   scheduler:
     image: dharniraj/frappe-custom:4.1.26
@@ -189,7 +189,7 @@ services:
       - frappe_network
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
     command:
       - bench
       - schedule
@@ -203,7 +203,7 @@ services:
       - frappe_network
     deploy:
       restart_policy:
-        condition: on-failure
+        condition: unless-stopped
     command:
       - node
       - /home/frappe/frappe-bench/apps/frappe/socketio.js
