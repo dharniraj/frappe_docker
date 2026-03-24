@@ -1,6 +1,6 @@
 services:
   backend:
-    image: dharniraj/frappe-custom:22.03.26
+    image: dharniraj/frappe-custom:4.1.26
     networks:
       - frappe_network
     deploy:
@@ -16,7 +16,7 @@ services:
       MARIADB_ROOT_PASSWORD: admin
 
   configurator:
-    image: dharniraj/frappe-custom:22.03.26
+    image: dharniraj/frappe-custom:4.1.26
     networks:
       - frappe_network
     deploy:
@@ -45,7 +45,7 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   create-site:
-    image: dharniraj/frappe-custom:22.03.26
+    image: dharniraj/frappe-custom:4.1.26
     networks:
       - frappe_network
     deploy:
@@ -100,7 +100,7 @@ services:
       - db-data:/var/lib/mysql
 
   frontend:
-    image: dharniraj/frappe-custom:22.03.26
+    image: dharniraj/frappe-custom:4.1.26
     networks:
       - frappe_network
     depends_on:
@@ -123,10 +123,10 @@ services:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
     ports:
-      - "8080:8080"
+      - "8080:8081"
 
   queue-long:
-    image: dharniraj/frappe-custom:22.03.26
+    image: dharniraj/frappe-custom:4.1.26
     networks:
       - frappe_network
     deploy:
@@ -145,7 +145,7 @@ services:
       FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
 
   queue-short:
-    image: dharniraj/frappe-custom:22.03.26
+    image: dharniraj/frappe-custom:4.1.26
     networks:
       - frappe_network
     deploy:
@@ -182,7 +182,7 @@ services:
         condition: on-failure
 
   scheduler:
-    image: dharniraj/frappe-custom:22.03.26
+    image: dharniraj/frappe-custom:4.1.26
     networks:
       - frappe_network
     deploy:
@@ -196,7 +196,7 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   websocket:
-    image: dharniraj/frappe-custom:22.03.26
+    image: dharniraj/frappe-custom:4.1.26
     networks:
       - frappe_network
     deploy:
