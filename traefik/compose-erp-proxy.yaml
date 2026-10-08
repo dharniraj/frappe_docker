@@ -1,0 +1,259 @@
+services:
+  backend:
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+        required: true
+    image: dharniraj/frappe-custom:15-7.10.26
+    networks:
+      - frappe_network
+      - mariadb_network
+    platform: linux/amd64
+    pull_policy: always
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: ${DB_HOST:-maria-db}
+      DB_PORT: "${DB_PORT:-3306}"
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD?DB_PASSWORD not set}
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD?DB_PASSWORD not set}
+
+  configurator:
+    depends_on:
+      redis-cache:
+        condition: service_started
+        required: true
+      redis-queue:
+        condition: service_started
+        required: true
+    image: dharniraj/frappe-custom:15-7.10.26
+    pull_policy: always
+    networks:
+      - frappe_network
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint:
+      - bash
+      - -c
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+    environment:
+      DB_HOST: ${DB_HOST:-maria-db}
+      DB_PORT: "${DB_PORT:-3306}"
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: "9000"
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+
+  create-site:
+    image: dharniraj/frappe-custom:15-7.10.26
+    networks:
+      - frappe_network
+      - mariadb_network
+    platform: linux/amd64
+    pull_policy: always
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    entrypoint:
+      - bash
+      - -c
+    command:
+      - >
+        wait-for-it -t 120 ${DB_HOST:-maria-db}:${DB_PORT:-3306};
+        wait-for-it -t 120 redis-cache:6379;
+        wait-for-it -t 120 redis-queue:6379;
+        export start=`date +%s`;
+        until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] && \
+          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] && \
+          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]];
+        do
+          echo "Waiting for sites/common_site_config.json to be created";
+          sleep 5;
+          if (( `date +%s`-start > 120 )); then
+            echo "could not find sites/common_site_config.json with required keys";
+            exit 1
+          fi
+        done;
+        echo "sites/common_site_config.json found";
+        bench new-site --mariadb-user-host-login-scope='%' --admin-password=${ADMIN_PASSWORD?ADMIN_PASSWORD not set} --db-root-username=root --db-root-password=${DB_PASSWORD?DB_PASSWORD not set} --install-app erpnext --install-app india_compliance --install-app payments --install-app webshop --install-app hrms --set-default stg.formigo.in;
+        bench --site stg.formigo.in set-config host_name https://stg.formigo.in;
+
+
+  frontend:
+    image: dharniraj/frappe-custom:15-7.10.26
+    pull_policy: always
+    networks:
+      - frappe_network
+    depends_on:
+      backend:
+        condition: service_started
+        required: true
+      websocket:
+        condition: service_started
+        required: true
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+    command:
+      - nginx-entrypoint.sh
+    environment:
+      BACKEND: backend:8000
+      FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME_HEADER:-stg.formigo.in}
+      SOCKETIO: websocket:9000
+      UPSTREAM_REAL_IP_ADDRESS: 172.16.0.0/12
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.${ROUTER?ROUTER not set}.loadbalancer.server.port=8080
+      # HTTP->HTTPS redirect is handled globally on traefik's "web" entrypoint
+      - traefik.http.routers.${ROUTER}-https.rule=${SITES_RULE?SITES_RULE not set}
+      - traefik.http.routers.${ROUTER}-https.entrypoints=websecure
+      - traefik.http.routers.${ROUTER}-https.tls=true
+      - traefik.http.routers.${ROUTER}-https.service=${ROUTER}
+      - traefik.http.routers.${ROUTER}-https.tls.certresolver=letsencrypt
+
+  queue-long:
+    image: dharniraj/frappe-custom:15-7.10.26
+    pull_policy: always
+    networks:
+      - frappe_network
+      - mariadb_network
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+    command:
+      - bench
+      - worker
+      - --queue
+      - long,default,short
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    environment:
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+
+  queue-short:
+    image: dharniraj/frappe-custom:15-7.10.26
+    pull_policy: always
+    networks:
+      - frappe_network
+      - mariadb_network
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+    command:
+      - bench
+      - worker
+      - --queue
+      - short,default
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    environment:
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+
+  redis-queue:
+    image: redis:6.2-alpine
+    networks:
+      - frappe_network
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+
+  redis-cache:
+    image: redis:6.2-alpine
+    networks:
+      - frappe_network
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+
+  scheduler:
+    image: dharniraj/frappe-custom:15-7.10.26
+    pull_policy: always
+    networks:
+      - frappe_network
+      - mariadb_network
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+    command:
+      - bench
+      - schedule
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-exec.datecron.schedule: "${BACKUP_CRONSTRING:-0 0 2 * * *}"
+      ofelia.job-exec.datecron.command: "bench --site all backup"
+      ofelia.job-exec.datecron.user: "frappe"
+
+  cron:
+    image: mcuadros/ofelia:latest
+    depends_on:
+      - scheduler
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  websocket:
+    image: dharniraj/frappe-custom:15-7.10.26
+    pull_policy: always
+    networks:
+      - frappe_network
+    deploy:
+      restart_policy:
+        condition: unless-stopped
+    command:
+      - node
+      - /home/frappe/frappe-bench/apps/frappe/socketio.js
+    environment:
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+
+volumes:
+  redis-queue-data:
+  sites:
+  logs:
+frontend
+networks:
+  frappe_network:
+    driver: bridge
+  mariadb_network:
+    name: mariadb_network
+    external: true
