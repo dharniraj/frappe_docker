@@ -250,7 +250,7 @@ volumes:
   redis-queue-data:
   sites:
   logs:
-frontend
+
 networks:
   frappe_network:
     driver: bridge
