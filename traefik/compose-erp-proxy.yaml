@@ -4,7 +4,7 @@ services:
       configurator:
         condition: service_completed_successfully
         required: true
-    image: dharniraj/frappe-custom:15-7.10.26
+    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
     networks:
       - frappe_network
       - mariadb_network
@@ -30,7 +30,7 @@ services:
       redis-queue:
         condition: service_started
         required: true
-    image: dharniraj/frappe-custom:15-7.10.26
+    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
     pull_policy: always
     networks:
       - frappe_network
@@ -60,7 +60,7 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   create-site:
-    image: dharniraj/frappe-custom:15-7.10.26
+    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
     networks:
       - frappe_network
       - mariadb_network
@@ -98,7 +98,7 @@ services:
 
 
   frontend:
-    image: dharniraj/frappe-custom:15-7.10.26
+    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
     pull_policy: always
     networks:
       - frappe_network
@@ -137,7 +137,7 @@ services:
       - traefik.http.routers.${ROUTER}-https.tls.certresolver=letsencrypt
 
   queue-long:
-    image: dharniraj/frappe-custom:15-7.10.26
+    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
     pull_policy: always
     networks:
       - frappe_network
@@ -158,7 +158,7 @@ services:
       FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
 
   queue-short:
-    image: dharniraj/frappe-custom:15-7.10.26
+    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
     pull_policy: always
     networks:
       - frappe_network
@@ -197,7 +197,7 @@ services:
         condition: unless-stopped
 
   scheduler:
-    image: dharniraj/frappe-custom:15-7.10.26
+    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
     pull_policy: always
     networks:
       - frappe_network
@@ -229,7 +229,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   websocket:
-    image: dharniraj/frappe-custom:15-7.10.26
+    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
     pull_policy: always
     networks:
       - frappe_network
