@@ -58,44 +58,7 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
-
-  create-site:
-    image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
-    networks:
-      - frappe_network
-      - mariadb_network
-    platform: linux/amd64
-    pull_policy: always
-    deploy:
-      restart_policy:
-        condition: none
-    volumes:
-      - sites:/home/frappe/frappe-bench/sites
-      - logs:/home/frappe/frappe-bench/logs
-    entrypoint:
-      - bash
-      - -c
-    command:
-      - >
-        wait-for-it -t 120 ${DB_HOST:-maria-db}:${DB_PORT:-3306};
-        wait-for-it -t 120 redis-cache:6379;
-        wait-for-it -t 120 redis-queue:6379;
-        export start=`date +%s`;
-        until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] && \
-          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] && \
-          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]];
-        do
-          echo "Waiting for sites/common_site_config.json to be created";
-          sleep 5;
-          if (( `date +%s`-start > 120 )); then
-            echo "could not find sites/common_site_config.json with required keys";
-            exit 1
-          fi
-        done;
-        echo "sites/common_site_config.json found";
-        bench new-site --mariadb-user-host-login-scope='%' --admin-password=${ADMIN_PASSWORD?ADMIN_PASSWORD not set} --db-root-username=root --db-root-password=${DB_PASSWORD?DB_PASSWORD not set} --install-app erpnext --install-app india_compliance --install-app payments --install-app webshop --install-app hrms --set-default stg.formigo.in;
-        bench --site stg.formigo.in set-config host_name https://stg.formigo.in;
-
+      
 
   frontend:
     image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
@@ -118,7 +81,7 @@ services:
       BACKEND: backend:8000
       FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME_HEADER:-stg.formigo.in}
       SOCKETIO: websocket:9000
-      UPSTREAM_REAL_IP_ADDRESS: 172.16.0.0/12
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "off"
       PROXY_READ_TIMEOUT: 120
@@ -248,8 +211,11 @@ services:
 
 volumes:
   redis-queue-data:
+    name: frappe_docker_redis-queue-data
   sites:
+    name: frappe_docker_sites
   logs:
+    name: frappe_docker_logs
 
 networks:
   frappe_network:

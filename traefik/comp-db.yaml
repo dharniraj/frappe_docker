@@ -1,0 +1,31 @@
+db:
+    image: mariadb:11.8
+    container_name: maria-db
+    networks:
+      - mariadb_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      restart_policy:
+        condition: on-failure
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MARIADB_ROOT_PASSWORD: admin
+    volumes:
+      - db-data:/var/lib/mysql
+
+volumes:
+  db-data:
+    name: frappe_docker_db-data
+
+networks:
+  mariadb_network:
+    name: mariadb_network
