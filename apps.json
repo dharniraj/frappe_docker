@@ -1,23 +1,27 @@
 [
   {
     "url": "https://github.com/dharniraj/erpnext",
-    "branch": "version-15"
+    "branch": "version-16"
   },
   {
     "url": "https://github.com/resilient-tech/india-compliance",
-    "branch": "version-15"
+    "branch": "version-16"
+  },
+  {
+    "url": "https://github.com/frappe/india-payroll",
+    "branch": "version-16"
   },
   {
     "url": "https://github.com/frappe/payments",
-    "branch": "version-15"
+    "branch": "version-16"
   },
   {
     "url": "https://github.com/frappe/webshop",
-    "branch": "version-15"
+    "branch": "version-16"
   },
   {
     "url": "https://github.com/frappe/hrms",
-    "branch": "version-15"
+    "branch": "version-16"
   },
   {
     "url": "https://github.com/frappe/telephony",
@@ -25,6 +29,10 @@
   },
   {
     "url": "https://github.com/frappe/helpdesk",
+    "branch": "main"
+  },
+  {
+    "url": "https://github.com/frappe/crm",
     "branch": "main"
   }
 ]

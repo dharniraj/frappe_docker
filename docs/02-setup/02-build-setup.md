@@ -57,11 +57,11 @@ Choose the appropriate build command based on your container runtime and desired
 ```bash
 docker build \
  --no-cache \
- --build-arg=FRAPPE_PATH=https://github.com/frappe/frappe \
- --build-arg=FRAPPE_BRANCH=version-16 \
+ --build-arg=FRAPPE_PATH=https://github.com/dharniraj/frappe \
+ --build-arg=FRAPPE_BRANCH=version-16-formigo \
  --secret=id=apps_json,src=apps.json \
- --tag=custom:16 \
- --file=images/layered/Containerfile .
+ --tag=dharniraj/frappe-custom:16-9.10.26 \
+ --file=images/custom/Containerfile .
 ```
 
 `Podman`:
