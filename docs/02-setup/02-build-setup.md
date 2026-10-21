@@ -60,7 +60,7 @@ docker build \
  --build-arg=FRAPPE_PATH=https://github.com/dharniraj/frappe \
  --build-arg=FRAPPE_BRANCH=version-16-formigo \
  --secret=id=apps_json,src=apps.json \
- --tag=dharniraj/frappe-custom:16-9.10.26 \
+ --tag=dharniraj/frappe-custom:16-20.10.26 \
  --file=images/custom/Containerfile .
 ```
 

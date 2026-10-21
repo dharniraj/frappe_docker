@@ -34,5 +34,9 @@
   {
     "url": "https://github.com/frappe/crm",
     "branch": "main"
+  },
+  {
+    "url": "https://github.com/frappe/insights",
+    "branch": "version-3"
   }
 ]
