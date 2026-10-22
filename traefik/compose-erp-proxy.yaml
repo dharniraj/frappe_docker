@@ -211,11 +211,11 @@ services:
 
 volumes:
   redis-queue-data:
-    name: frappe_docker_redis-queue-data
+    name: frappe_redis-queue-data
   sites:
-    name: frappe_docker_sites
+    name: frappe_sites
   logs:
-    name: frappe_docker_logs
+    name: frappe_logs
 
 networks:
   frappe_network:

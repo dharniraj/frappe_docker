@@ -25,7 +25,7 @@ services:
 
 volumes:
   db-data:
-    name: frappe_docker_db-data
+    name: frappe_db-data
 
 networks:
   mariadb_network:
