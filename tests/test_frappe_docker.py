@@ -15,6 +15,18 @@ BACKEND_SERVICES = (
 )
 
 
+def test_wkhtmltopdf_installation(compose: Compose, python_path: str):
+    expected = os.getenv("INSTALL_WKHTMLTOPDF", "true") != "false"
+    compose.exec(
+        "backend",
+        python_path,
+        "-c",
+        f"import shutil; assert bool(shutil.which('wkhtmltopdf')) == {expected}",
+    )
+    if expected:
+        compose.exec("backend", "wkhtmltopdf", "--version")
+
+
 @pytest.mark.parametrize("service", BACKEND_SERVICES)
 def test_links_in_backends(service: str, compose: Compose, python_path: str):
     filename = "_check_connections.py"
@@ -182,7 +194,7 @@ def test_arbitrary_uid_execution(compose: Compose):
     Executes the entrypoints directly to verify:
     - Container startup with arbitrary non-root UID (1000680000) and GID 0
     - Effective runtime umask (0002)
-    - Writability of required paths (/home/frappe, /tmp, sites directory)
+    - Writability of runtime paths, the bench root, and installed app directories/files
     - Frontend nginx configuration test under arbitrary UID
     """
     check_script = (
@@ -199,12 +211,18 @@ def test_arbitrary_uid_execution(compose: Compose):
         "old_umask = os.umask(0)\n"
         "os.umask(old_umask)\n"
         "assert old_umask == 0o002, f'Expected umask 0002, got {oct(old_umask)}'\n"
-        "with tempfile.NamedTemporaryFile(dir='/tmp') as f:\n"
-        "    f.write(b'ok')\n"
-        "with tempfile.NamedTemporaryFile(dir='/home/frappe') as f:\n"
-        "    f.write(b'ok')\n"
-        "with tempfile.NamedTemporaryFile(dir='/home/frappe/frappe-bench/sites') as f:\n"
-        "    f.write(b'ok')\n"
+        "bench_path = '/home/frappe/frappe-bench'\n"
+        "for directory in ('/tmp', '/home/frappe', bench_path, f'{bench_path}/sites'):\n"
+        "    with tempfile.NamedTemporaryFile(dir=directory) as f:\n"
+        "        f.write(b'ok')\n"
+        "for app in ('frappe', 'erpnext'):\n"
+        "    app_path = f'{bench_path}/apps/{app}'\n"
+        "    if not os.path.isdir(app_path):\n"
+        "        continue\n"
+        "    with tempfile.NamedTemporaryFile(dir=app_path) as f:\n"
+        "        f.write(b'ok')\n"
+        "    with open(f'{app_path}/{app}/__init__.py', 'r+b'):\n"
+        "        pass\n"
         "print(f'VERIFIED:{uid}:{gid}')\n"
     )
 
