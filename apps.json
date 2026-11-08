@@ -38,5 +38,13 @@
   {
     "url": "https://github.com/frappe/insights",
     "branch": "version-3"
+  },
+  {
+    "url": "https://github.com/frappe/raven",
+    "branch": "main"
+  },
+  {
+    "url": "https://github.com/frappe/raven_integration",
+    "branch": "main"
   }
 ]
