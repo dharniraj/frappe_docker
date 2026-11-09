@@ -79,7 +79,7 @@ services:
       - nginx-entrypoint.sh
     environment:
       BACKEND: backend:8000
-      FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME_HEADER:-stg.formigo.in}
+      FRAPPE_SITE_NAME_HEADER: $$host
       SOCKETIO: websocket:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
@@ -98,6 +98,9 @@ services:
       - traefik.http.routers.${ROUTER}-https.tls=true
       - traefik.http.routers.${ROUTER}-https.service=${ROUTER}
       - traefik.http.routers.${ROUTER}-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.${ROUTER}-https.tls.domains[0].main=daisoltech.com
+      - traefik.http.routers.${ROUTER}-https.tls.domains[0].sans=*.daisoltech.com
+
 
   queue-long:
     image: ${FRAPPE_IMAGE?FRAPPE_IMAGE not set}
